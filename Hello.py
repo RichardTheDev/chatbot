@@ -16,7 +16,7 @@ client = None
 client = openai.OpenAI(api_key=openai_api_key)
 assistant_id = st.secrets["assistant_id"]
 instructions = ""
-assistant_title = "J-Active DEMO"
+assistant_title = "Lindsay Goldberg Chatbot DEMO"
 enabled_file_upload_message =""
 
 
