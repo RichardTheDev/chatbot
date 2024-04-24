@@ -3,7 +3,7 @@ import time
 import base64
 import re
 import json
-
+from login import check_credentials
 import streamlit as st
 import openai
 from openai.types.beta.threads import MessageContentImageFile
@@ -57,41 +57,79 @@ def create_file_link(file_name, file_id):
     return link_tag
 
 
+# def get_message_value_list(messages):
+#     messages_value_list = []
+#     for message in messages:
+#         message_content = ""
+#         print(message)
+#         if not isinstance(message, MessageContentImageFile):
+#             message_content = message.content[0].text
+#             annotations = message_content.annotations
+#         else:
+#             image_file = client.files.retrieve(message.file_id)
+#             messages_value_list.append(
+#                 f"Click <here> to download {image_file.filename}"
+#             )
+#         citations = []
+#         for index, annotation in enumerate(annotations):
+#             message_content.value = message_content.value.replace(
+#                 annotation.text, f" [{index}]"
+#             )
+#
+#             if file_citation := getattr(annotation, "file_citation", None):
+#                 cited_file = client.files.retrieve(file_citation.file_id)
+#                 citations.append(
+#                     f"[{index}] {file_citation.quote} from {cited_file.filename}"
+#                 )
+#             elif file_path := getattr(annotation, "file_path", None):
+#                 link_tag = create_file_link(
+#                     annotation.text.split("/")[-1], file_path.file_id
+#                 )
+#                 message_content.value = re.sub(
+#                     r"\[(.*?)\]\s*\(\s*(.*?)\s*\)", link_tag, message_content.value
+#                 )
+#
+#         message_content.value += "\n" + "\n".join(citations)
+#         messages_value_list.append(message_content.value)
+#         return messages_value_list
 def get_message_value_list(messages):
     messages_value_list = []
     for message in messages:
         message_content = ""
         print(message)
         if not isinstance(message, MessageContentImageFile):
-            message_content = message.content[0].text
-            annotations = message_content.annotations
+            if message.content:  # Check if content is not empty
+                message_content = message.content[0].text
+                annotations = message_content.annotations
+                citations = []
+                for index, annotation in enumerate(annotations):
+                    message_content.value = message_content.value.replace(
+                        annotation.text, f" [{index}]"
+                    )
+
+                    if file_citation := getattr(annotation, "file_citation", None):
+                        cited_file = client.files.retrieve(file_citation.file_id)
+                        citations.append(
+                            f"[{index}] {file_citation.quote} from {cited_file.filename}"
+                        )
+                    elif file_path := getattr(annotation, "file_path", None):
+                        link_tag = create_file_link(
+                            annotation.text.split("/")[-1], file_path.file_id
+                        )
+                        message_content.value = re.sub(
+                            r"\[(.*?)\]\s*\(\s*(.*?)\s*\)", link_tag, message_content.value
+                        )
+
+                message_content.value += "\n" + "\n".join(citations)
+                messages_value_list.append(message_content.value)
+            else:
+                messages_value_list.append("No content available.")
         else:
             image_file = client.files.retrieve(message.file_id)
             messages_value_list.append(
                 f"Click <here> to download {image_file.filename}"
             )
-        citations = []
-        for index, annotation in enumerate(annotations):
-            message_content.value = message_content.value.replace(
-                annotation.text, f" [{index}]"
-            )
-
-            if file_citation := getattr(annotation, "file_citation", None):
-                cited_file = client.files.retrieve(file_citation.file_id)
-                citations.append(
-                    f"[{index}] {file_citation.quote} from {cited_file.filename}"
-                )
-            elif file_path := getattr(annotation, "file_path", None):
-                link_tag = create_file_link(
-                    annotation.text.split("/")[-1], file_path.file_id
-                )
-                message_content.value = re.sub(
-                    r"\[(.*?)\]\s*\(\s*(.*?)\s*\)", link_tag, message_content.value
-                )
-
-        message_content.value += "\n" + "\n".join(citations)
-        messages_value_list.append(message_content.value)
-        return messages_value_list
+    return messages_value_list
 
 
 def get_message_list(thread, run):
@@ -219,7 +257,7 @@ def disable_form():
 def main():
     st.title(assistant_title)
     st.markdown("[by Updev Solutions](https://updev-solutions.com)", unsafe_allow_html=True)
-    st.info("This assistant is designed to help you provide accurate and diplomatic responses to misinformed comments on social media regarding the Israeli-Palestinian conflict. Simply paste the comment into the chatbot, and it will offer you an informed and measured reply, based on facts from the PDF documents provided, to enlighten the discussion.")
+    # st.info("This assistant is designed to help you provide accurate and diplomatic responses to misinformed comments on social media regarding the Israeli-Palestinian conflict. Simply paste the comment into the chatbot, and it will offer you an informed and measured reply, based on facts from the PDF documents provided, to enlighten the discussion.")
     user_msg = st.chat_input(
         "Message", on_submit=disable_form, disabled=st.session_state.in_progress
     )
@@ -262,5 +300,18 @@ def main():
     render_chat()
 
 
-if __name__ == "__main__":
-    main()
+
+
+if __name__ == '__main__':
+    st.markdown("""
+                <style>
+                .stActionButton {visibility: hidden;}
+                /* Hide the Streamlit footer */
+                .reportview-container .main footer {visibility: hidden;}
+                /* Additionally, hide Streamlit's hamburger menu - optional */
+                .sidebar .sidebar-content {visibility: hidden;}
+                </style>
+                """, unsafe_allow_html=True)
+    isAuth = check_credentials()
+    if isAuth:
+        main()
