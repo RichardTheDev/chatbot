@@ -264,7 +264,7 @@ def main():
     user_msg = st.chat_input(
         "Message", on_submit=disable_form, disabled=st.session_state.in_progress
     )
-    if enabled_file_upload_message:
+    if True:
         uploaded_file = st.sidebar.file_uploader(
             enabled_file_upload_message,
             type=[
