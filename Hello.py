@@ -3,7 +3,7 @@ import time
 import base64
 import re
 import json
-
+from login import check_credentials
 import streamlit as st
 import openai
 from openai.types.beta.threads import MessageContentImageFile
@@ -332,5 +332,17 @@ def main():
     render_chat()
 
 
-if __name__ == "__main__":
-    main()
+
+if __name__ == '__main__':
+    st.markdown("""
+                <style>
+                .stActionButton {visibility: hidden;}
+                /* Hide the Streamlit footer */
+                .reportview-container .main footer {visibility: hidden;}
+                /* Additionally, hide Streamlit's hamburger menu - optional */
+                .sidebar .sidebar-content {visibility: hidden;}
+                </style>
+                """, unsafe_allow_html=True)
+    isAuth = check_credentials()
+    if isAuth:
+        main()
