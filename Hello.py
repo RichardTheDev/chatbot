@@ -384,9 +384,9 @@ def main():
             st.session_state.last_message = initiation
             st.session_state.assistant_initialized = True
 
-            st.write("Assistant ID:", assistant_id)
-            st.write("Vector ID:", vector_id)
-            st.write("Thread ID:", thread_id)
+            # st.write("Assistant ID:", assistant_id)
+            # st.write("Vector ID:", vector_id)
+            # st.write("Thread ID:", thread_id)
 
             process_run(st, thread_id, assistant_id)
 
