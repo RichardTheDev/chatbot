@@ -56,20 +56,56 @@ def create_file_link(file_name, file_id):
     link_tag = f'<a href="data:{content_type};base64,{b64}" download="{file_name}">Download Link</a>'
     return link_tag
 
-
+#
+# def get_message_value_list(messages):
+#     messages_value_list = []
+#     for message in messages:
+#         message_content = ""
+#         print(message)
+#         if not isinstance(message, MessageContentImageFile):
+#             message_content = message.content[0].text
+#             annotations = message_content.annotations
+#         else:
+#             image_file = client.files.retrieve(message.file_id)
+#             messages_value_list.append(
+#                 f"Click <here> to download {image_file.filename}"
+#             )
+#         citations = []
+#         for index, annotation in enumerate(annotations):
+#             message_content.value = message_content.value.replace(
+#                 annotation.text, f" [{index}]"
+#             )
+#
+#             if file_citation := getattr(annotation, "file_citation", None):
+#                 cited_file = client.files.retrieve(file_citation.file_id)
+#                 citations.append(
+#                     f"[{index}] {file_citation.quote} from {cited_file.filename}"
+#                 )
+#             elif file_path := getattr(annotation, "file_path", None):
+#                 link_tag = create_file_link(
+#                     annotation.text.split("/")[-1], file_path.file_id
+#                 )
+#                 message_content.value = re.sub(
+#                     r"\[(.*?)\]\s*\(\s*(.*?)\s*\)", link_tag, message_content.value
+#                 )
+#
+#         message_content.value += "\n" + "\n".join(citations)
+#         messages_value_list.append(message_content.value)
+#         return messages_value_list
 def get_message_value_list(messages):
     messages_value_list = []
     for message in messages:
         message_content = ""
         print(message)
-        if not isinstance(message, MessageContentImageFile):
-            message_content = message.content[0].text
+        # Check if message.content is not empty and has the expected structure
+        if message.content and isinstance(message.content[0], dict) and 'text' in message.content[0]:
+            message_content = message.content[0]['text']
             annotations = message_content.annotations
-        else:
+        elif isinstance(message, MessageContentImageFile):
             image_file = client.files.retrieve(message.file_id)
-            messages_value_list.append(
-                f"Click <here> to download {image_file.filename}"
-            )
+            messages_value_list.append(f"Click <here> to download {image_file.filename}")
+            continue  # Skip the rest of the loop for image messages
+
         citations = []
         for index, annotation in enumerate(annotations):
             message_content.value = message_content.value.replace(
@@ -78,20 +114,15 @@ def get_message_value_list(messages):
 
             if file_citation := getattr(annotation, "file_citation", None):
                 cited_file = client.files.retrieve(file_citation.file_id)
-                citations.append(
-                    f"[{index}] {file_citation.quote} from {cited_file.filename}"
-                )
+                citations.append(f"[{index}] {file_citation.quote} from {cited_file.filename}")
             elif file_path := getattr(annotation, "file_path", None):
-                link_tag = create_file_link(
-                    annotation.text.split("/")[-1], file_path.file_id
-                )
-                message_content.value = re.sub(
-                    r"\[(.*?)\]\s*\(\s*(.*?)\s*\)", link_tag, message_content.value
-                )
+                link_tag = create_file_link(annotation.text.split("/")[-1], file_path.file_id)
+                message_content.value = re.sub(r"\[(.*?)\]\s*\(\s*(.*?)\s*\)", link_tag, message_content.value)
 
         message_content.value += "\n" + "\n".join(citations)
         messages_value_list.append(message_content.value)
-        return messages_value_list
+
+    return messages_value_list
 
 
 def get_message_list(thread, run):
